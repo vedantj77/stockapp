@@ -4,13 +4,12 @@ import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import InputField from '@/components/forms/InputField';
 import FooterLink from '@/components/forms/FooterLink';
-import {signInWithEmail, signUpWithEmail} from "@/lib/actions/auth.actions";
-import {toast} from "sonner";
-import {signInEmail} from "better-auth/api";
-import {useRouter} from "next/navigation";
+import { signInWithEmail } from "@/lib/actions/auth.actions"; // Removed signUpWithEmail import
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 const SignIn = () => {
-    const router = useRouter()
+    const router = useRouter();
     const {
         register,
         handleSubmit,
@@ -25,15 +24,32 @@ const SignIn = () => {
 
     const onSubmit = async (data: SignInFormData) => {
         try {
+            console.log('🟡 [CLIENT] Starting sign in...');
+            
             const result = await signInWithEmail(data);
-            if(result.success) router.push('/');
-        } catch (e) {
-            console.error(e);
+            
+            console.log('🟡 [CLIENT] Sign in result:', result);
+            
+            if (result.success) {
+                console.log('✅ [CLIENT] Sign in successful!');
+                toast.success('Signed in successfully!');
+                
+                // Redirect to home page
+                router.push('/');
+                router.refresh();
+            } else {
+                console.log('❌ [CLIENT] Sign in failed:', result.error);
+                toast.error('Sign in failed', {
+                    description: result.error || 'Invalid email or password.'
+                });
+            }
+        } catch (error: any) {
+            console.error('🔥 [CLIENT] Unexpected error:', error);
             toast.error('Sign in failed', {
-                description: e instanceof Error ? e.message : 'Failed to sign in.'
-            })
+                description: error?.message || 'Failed to sign in.'
+            });
         }
-    }
+    };
 
     return (
         <>
@@ -46,7 +62,13 @@ const SignIn = () => {
                     placeholder="contact@jsmastery.com"
                     register={register}
                     error={errors.email}
-                    validation={{ required: 'Email is required', pattern: /^\w+@\w+\.\w+$/ }}
+                    validation={{ 
+                        required: 'Email is required', 
+                        pattern: { 
+                            value: /^\w+@\w+\.\w+$/, 
+                            message: 'Invalid email format' 
+                        } 
+                    }}
                 />
 
                 <InputField
@@ -56,7 +78,13 @@ const SignIn = () => {
                     type="password"
                     register={register}
                     error={errors.password}
-                    validation={{ required: 'Password is required', minLength: 8 }}
+                    validation={{ 
+                        required: 'Password is required', 
+                        minLength: { 
+                            value: 8, 
+                            message: 'Password must be at least 8 characters' 
+                        } 
+                    }}
                 />
 
                 <Button type="submit" disabled={isSubmitting} className="yellow-btn w-full mt-5">
@@ -68,4 +96,5 @@ const SignIn = () => {
         </>
     );
 };
+
 export default SignIn;
