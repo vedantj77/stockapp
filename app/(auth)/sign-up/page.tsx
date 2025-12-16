@@ -29,20 +29,40 @@ const SignUp = () => {
             preferredIndustry: 'Technology'
         },
         mode: 'onBlur'
-    }, );
+    });
 
-    const onSubmit = async (data: SignUpFormData) => {
-        try {
-            const result = await signUpWithEmail(data);
-            if(result.success) router.push('/');
-        } catch (e) {
-            console.error(e);
+const onSubmit = async (data: SignUpFormData) => {
+    try {
+        console.log('🟡 [CLIENT] Starting signup...');
+        
+        const result = await signUpWithEmail(data);
+        
+        console.log('🟡 [CLIENT] Signup result:', result);
+        
+        if (result.success) {
+            console.log('✅ [CLIENT] Signup successful!');
+            toast.success('Account created successfully!', {
+                description: result.message || 'Your account has been created.'
+            });
+            
+            // Wait for toast to show, then redirect
+            setTimeout(() => {
+                router.push('/');
+                router.refresh(); // Refresh to update auth state
+            }, 1500);
+        } else {
+            console.log('❌ [CLIENT] Signup failed:', result.error);
             toast.error('Sign up failed', {
-                description: e instanceof Error ? e.message : 'Failed to create an account.'
-            })
+                description: result.error || 'Failed to create account. Please try again.'
+            });
         }
+    } catch (error: any) {
+        console.error('🔥 [CLIENT] Unexpected error:', error);
+        toast.error('Sign up failed', {
+            description: 'An unexpected error occurred. Please try again.'
+        });
     }
-
+}
     return (
         <>
             <h1 className="form-title">Sign Up & Personalize</h1>
@@ -63,7 +83,7 @@ const SignUp = () => {
                     placeholder="contact@jsmastery.com"
                     register={register}
                     error={errors.email}
-                    validation={{ required: 'Email name is required', pattern: /^\w+@\w+\.\w+$/, message: 'Email address is required' }}
+                    validation={{ required: 'Email is required', pattern: { value: /^\w+@\w+\.\w+$/, message: 'Invalid email format' } }}
                 />
 
                 <InputField
@@ -73,7 +93,7 @@ const SignUp = () => {
                     type="password"
                     register={register}
                     error={errors.password}
-                    validation={{ required: 'Password is required', minLength: 8 }}
+                    validation={{ required: 'Password is required', minLength: { value: 8, message: 'Password must be at least 8 characters' } }}
                 />
 
                 <CountrySelectField
